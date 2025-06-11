@@ -8,9 +8,18 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\View;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class ClienteExportController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:clientes.exportar')->only(['exportExcel', 'exportPDF']);
+    }
+
+
     public function exportExcel()
     {
         $clientes = Cliente::all();
