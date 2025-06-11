@@ -5,14 +5,31 @@
 
     {{-- Título y botones --}}
     <h1 class="mb-4">Listado de Clientes</h1>
-    <a href="{{ route('clientes.create') }}" class="btn btn-primary mb-3">Agregar Cliente</a>
+
+    @if ($filtro !== 'eliminados')
+        @can('clientes.crear')
+            <a href="{{ route('clientes.create') }}" class="btn btn-primary mb-3">Agregar Cliente</a>
+        @endcan
+    @endif
 
     {{-- Exportar --}}
+    @can('clientes.exportar')
     <div class="mb-3">
-       <a href="{{ route('clientes.export.excel') }}" class="btn btn-success">Exportar Excel</a>
-       <a href="{{ route('clientes.export.pdf') }}" class="btn btn-danger">Exportar PDF</a>
+        <a href="{{ route('clientes.export.excel') }}" class="btn btn-success">Exportar Excel</a>
+        <a href="{{ route('clientes.export.pdf') }}" class="btn btn-danger">Exportar PDF</a>
     </div>
+    @endcan
 
+    {{-- Filtro de estado --}}
+    @can('clientes.restaurar')
+    <form method="GET" action="{{ route('clientes.index') }}" class="mb-3">
+        <select name="filtro" onchange="this.form.submit()" class="form-select w-auto">
+            <option value="activos" {{ $filtro === 'activos' ? 'selected' : '' }}>Activos</option>
+            <option value="eliminados" {{ $filtro === 'eliminados' ? 'selected' : '' }}>Eliminados</option>
+            <option value="todos" {{ $filtro === 'todos' ? 'selected' : '' }}>Todos</option>
+        </select>
+    </form>
+    @endcan
     {{-- Tabla de clientes --}}
     <div class="table-responsive">
         <table id="tabla-clientes" class="table table-bordered table-striped">
@@ -21,6 +38,7 @@
                     <th>Nombre</th>
                     <th>Correo</th>
                     <th>Teléfono</th>
+                    <th>Redes</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -30,26 +48,55 @@
                     <td>{{ $cliente->nombre }}</td>
                     <td>{{ $cliente->correo }}</td>
                     <td>{{ $cliente->telefono }}</td>
-                   <td>
-                        <a href="{{ route('clientes.show', $cliente->id) }}" class="btn btn-sm btn-info" title="Ver">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-sm btn-warning" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a href="tel:{{ $cliente->telefono }}" class="btn btn-sm btn-primary" title="Llamar">
-                            <i class="bi bi-telephone"></i>
-                        </a>
-                        <a href="https://wa.me/506{{ $cliente->telefono }}" target="_blank" class="btn btn-sm btn-success" title="WhatsApp">
-                            <i class="bi bi-whatsapp"></i>
-                        </a>
-                        <form action="{{ route('clientes.destroy', $cliente->id) }}" method="POST" style="display:inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
+                    <td>
+                        @if($cliente->etiquetas && $cliente->etiquetas->isNotEmpty())
+                            @foreach($cliente->etiquetas as $etiqueta)
+                                <span class="badge bg-primary">{{ $etiqueta->nombre }}</span>
+                            @endforeach
+                        @else
+                            <span class="text-muted">Ninguna</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if (!$cliente->deleted_at)
+                            <a href="{{ route('clientes.show', $cliente->id) }}" class="btn btn-sm btn-info" title="Ver">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            @can('clientes.editar')
+                                <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            @endcan
+                            @if ($cliente->telefono)
+                                <a href="tel:{{ $cliente->telefono }}" class="btn btn-sm btn-primary" title="Llamar">
+                                    <i class="bi bi-telephone"></i>
+                                </a>
+                                <a href="https://wa.me/506{{ $cliente->telefono }}" target="_blank" class="btn btn-sm btn-success" title="WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                            @endif
+                        @endif
+
+                       @if ($cliente->deleted_at)
+                        @can('clientes.restaurar')
+                            <form action="{{ route('clientes.restaurar', $cliente->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-sm" title="Restaurar">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </form>
+                        @endcan
+                    @else
+                        @can('clientes.eliminar')
+                            <form id="form-delete-{{ $cliente->id }}" action="{{ route('clientes.destroy', $cliente->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-danger btn-sm btn-delete" data-id="{{ $cliente->id }}" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        @endcan
+                    @endif
                     </td>
                 </tr>
                 @endforeach
@@ -105,8 +152,8 @@
             });
         });
     });
-</script>
 
+    </script>
 
     {{-- Activar DataTables --}}
     <script>

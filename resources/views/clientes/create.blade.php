@@ -44,21 +44,21 @@
             @enderror
         </div>
 
-        <div class="form-group">
-            <label for="direccion">Dirección</label>
-            <textarea name="direccion" class="form-control @error('direccion') is-invalid @enderror">{{ old('direccion') }}</textarea>
-            @error('direccion')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
 
         <div class="form-group">
             <label for="etiquetas">Etiquetas</label>
-            <input type="text" name="etiquetas" class="form-control @error('etiquetas') is-invalid @enderror" value="{{ old('etiquetas') }}">
+            <select name="etiquetas[]" id="etiquetas" class="form-control select2 @error('etiquetas') is-invalid @enderror" multiple>
+                @foreach($etiquetas as $etiqueta)
+                    <option value="{{ $etiqueta->id }}" {{ collect(old('etiquetas'))->contains($etiqueta->id) ? 'selected' : '' }}>
+                        {{ $etiqueta->nombre }}
+                    </option>
+                @endforeach
+            </select>
             @error('etiquetas')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
+
 
         <div class="mt-4">
             <button type="submit" class="btn btn-success me-2">Guardar</button>
@@ -79,4 +79,19 @@
             });
         </script>
     @endif
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#etiquetas').select2({
+            placeholder: "Selecciona una o varias etiquetas",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+    
+
 @endpush
+

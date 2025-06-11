@@ -9,8 +9,17 @@
             <h4 class="card-title">{{ $cliente->nombre }}</h4>
             <p><strong>Correo:</strong> {{ $cliente->correo ?? 'N/A' }}</p>
             <p><strong>Teléfono:</strong> {{ $cliente->telefono ?? 'N/A' }}</p>
-            <p><strong>Dirección:</strong> {{ $cliente->direccion ?? 'N/A' }}</p>
-            <p><strong>Etiquetas:</strong> {{ $cliente->etiquetas ?? 'Ninguna' }}</p>
+            <p><strong>Etiquetas:</strong>
+                @if ($cliente->etiquetas && $cliente->etiquetas->count())
+                    @foreach ($cliente->etiquetas as $etiqueta)
+                        <span class="badge bg-primary">{{ $etiqueta->nombre }}</span>
+                    @endforeach
+                @else
+                    Ninguna
+                @endif
+            </p>
+
+
         </div>
     </div>
 
